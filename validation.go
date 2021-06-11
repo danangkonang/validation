@@ -1,4 +1,4 @@
-package validation
+package main
 
 import (
 	"errors"
@@ -54,4 +54,7 @@ func Validation(data, rules string) error {
 
 	}
 	return nil
+}
+func main() {
+
 }
