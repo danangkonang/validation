@@ -1,4 +1,4 @@
-package main
+package validation
 
 import (
 	"errors"
@@ -14,7 +14,7 @@ func Validation(data, rules string) error {
 		// required
 		if r == "required" {
 			if data == "" {
-				return errors.New("kosong")
+				return errors.New("is required")
 			}
 		}
 
@@ -54,7 +54,4 @@ func Validation(data, rules string) error {
 
 	}
 	return nil
-}
-func main() {
-
 }
