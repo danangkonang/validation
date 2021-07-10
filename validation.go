@@ -2,19 +2,21 @@ package validation
 
 import (
 	"errors"
+	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
 )
 
-func Validation(data, rules string) error {
+func Validation(value interface{}, rules string) error {
+	data := fmt.Sprintf("%v", value)
 	rule := strings.Split(rules, "|")
 	for _, r := range rule {
 
 		// required
 		if r == "required" {
 			if data == "" {
-				return errors.New("is required")
+				return errors.New(" is required")
 			}
 		}
 
@@ -26,7 +28,7 @@ func Validation(data, rules string) error {
 			length_value := len(data)
 
 			if length_value < length_minimum {
-				return errors.New("minlength is " + min_length)
+				return errors.New(" min length is " + min_length)
 			}
 		}
 
@@ -38,7 +40,7 @@ func Validation(data, rules string) error {
 			length_value := len(data)
 
 			if length_value > length_maximum {
-				return errors.New("maxlength is " + max_length)
+				return errors.New(" max length is " + max_length)
 			}
 		}
 
@@ -48,10 +50,14 @@ func Validation(data, rules string) error {
 			re := regexp.MustCompile(emailRegexString1)
 			isEmail := re.MatchString(data)
 			if !isEmail {
-				return errors.New("invalid email address")
+				return errors.New(" is not valid email address")
 			}
 		}
 
 	}
 	return nil
+}
+
+func Trim(value string) string {
+	return strings.Join(strings.Fields(value), " ")
 }
