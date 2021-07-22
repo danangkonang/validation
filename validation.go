@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-func Validation(value interface{}, rules string) error {
+func Validation(value interface{}, rules string, message ...string) error {
 	data := fmt.Sprintf("%v", value)
 	rule := strings.Split(rules, "|")
 	for _, r := range rule {
