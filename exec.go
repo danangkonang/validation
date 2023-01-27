@@ -31,7 +31,6 @@ func isNumber(fl reflect.Value) bool {
 	}
 }
 
-// isNumeric is the validation function for validating if the current field's value is a valid numeric value.
 func isNumeric(fl reflect.Value) bool {
 	switch fl.Kind() {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr, reflect.Float32, reflect.Float64:
@@ -43,7 +42,6 @@ func isNumeric(fl reflect.Value) bool {
 
 func isLongitude(fl reflect.Value) bool {
 	field := fl
-
 	var v string
 	switch field.Kind() {
 	case reflect.String:
@@ -59,14 +57,11 @@ func isLongitude(fl reflect.Value) bool {
 	default:
 		panic(fmt.Sprintf("Bad field type %T", field.Interface()))
 	}
-
 	return longitudeRegex.MatchString(v)
 }
 
-// isLatitude is the validation function for validating if the field's value is a valid latitude coordinate.
 func isLatitude(fl reflect.Value) bool {
 	field := fl
-
 	var v string
 	switch field.Kind() {
 	case reflect.String:
@@ -82,6 +77,5 @@ func isLatitude(fl reflect.Value) bool {
 	default:
 		panic(fmt.Sprintf("Bad field type %T", field.Interface()))
 	}
-
 	return latitudeRegex.MatchString(v)
 }

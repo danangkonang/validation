@@ -34,9 +34,10 @@ func TestRequired(t *testing.T) {
 			},
 		},
 	}
+	v := New()
 	for _, m := range models {
 		t.Run(m.name, func(t *testing.T) {
-			r, err := MustValid(m.data)
+			r, err := v.MustValid(m.data)
 			if err != nil {
 				require.Equal(t, m.expected, r)
 			} else {
@@ -134,9 +135,10 @@ func TestEmail(t *testing.T) {
 			},
 		},
 	}
+	v := New()
 	for _, m := range models {
 		t.Run(m.name, func(t *testing.T) {
-			r, err := MustValid(m.data)
+			r, err := v.MustValid(m.data)
 			if err != nil {
 				require.Equal(t, m.expected, r)
 			} else {
@@ -145,43 +147,3 @@ func TestEmail(t *testing.T) {
 		})
 	}
 }
-
-// func TestValidation(t *testing.T) {
-// 	tests := []struct {
-// 		name     string
-// 		rule     string
-// 		data     string
-// 		axpected interface{}
-// 	}{
-// 		{
-// 			name:     "required",
-// 			rule:     "required",
-// 			data:     "data",
-// 			axpected: nil,
-// 		},
-// 		{
-// 			name:     "minlength",
-// 			rule:     "minlength:1",
-// 			data:     "satu",
-// 			axpected: nil,
-// 		},
-// 		{
-// 			name:     "maxlength",
-// 			rule:     "maxlength:5",
-// 			data:     "lima",
-// 			axpected: nil,
-// 		},
-// 		{
-// 			name:     "email",
-// 			rule:     "email",
-// 			data:     "example@email.com",
-// 			axpected: nil,
-// 		},
-// 	}
-// 	for _, test := range tests {
-// 		t.Run(test.name, func(t *testing.T) {
-// 			result := Validation(test.data, test.rule)
-// 			require.Equal(t, test.axpected, result)
-// 		})
-// 	}
-// }
