@@ -18,6 +18,39 @@ func isAlphanum(fl reflect.Value) bool {
 	return alphaNumericRegex.MatchString(fl.String())
 }
 
+func isBoolean(fl reflect.Value) bool {
+	bools := []string{"0", "1", "true", "false", "True", "False"}
+	for _, b := range bools {
+		if b == fl.String() {
+			return true
+		}
+	}
+	return false
+}
+
+func isIP(fl reflect.Value) bool {
+	return ipRegex.MatchString(fl.String())
+}
+
+// Ref: https://en.wikipedia.org/wiki/IPv4
+func isIPV4(fl reflect.Value) bool {
+	return ipV4Regex.MatchString(fl.String())
+}
+
+// Ref: https://en.wikipedia.org/wiki/IPv6
+func isIPV6(fl reflect.Value) bool {
+	return ipV6Regex.MatchString(fl.String())
+}
+
+func isURL(fl reflect.Value) bool {
+	return urlRegex.MatchString(fl.String())
+}
+
+// isDate check the date string is valid or not
+func isDate(fl reflect.Value) bool {
+	return dateRegex.MatchString(fl.String())
+}
+
 func isEmail(fl reflect.Value) bool {
 	return emailRegex.MatchString(fl.String())
 }
@@ -78,4 +111,24 @@ func isLatitude(fl reflect.Value) bool {
 		panic(fmt.Sprintf("Bad field type %T", field.Interface()))
 	}
 	return latitudeRegex.MatchString(v)
+}
+
+func isMinimum(fl reflect.Value, rule int) bool {
+	if len(fl.String()) >= rule {
+		return true
+	} else {
+		return false
+	}
+}
+
+func isMaximum(fl reflect.Value, rule int) bool {
+	if len(fl.String()) <= rule {
+		return true
+	} else {
+		return false
+	}
+}
+
+func isEqualField(fl reflect.Value, rule string) bool {
+	return fl.String() == rule
 }

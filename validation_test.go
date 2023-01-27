@@ -28,8 +28,7 @@ func TestRequired(t *testing.T) {
 			},
 			expected: []*validationErrors{
 				{
-					Key:     "required",
-					Message: "required",
+					Key: "required",
 				},
 			},
 		},
@@ -69,8 +68,7 @@ func TestEmail(t *testing.T) {
 			},
 			expected: []*validationErrors{
 				{
-					Key:     "email",
-					Message: "email",
+					Key: "email",
 				},
 			},
 		},
@@ -81,8 +79,7 @@ func TestEmail(t *testing.T) {
 			},
 			expected: []*validationErrors{
 				{
-					Key:     "email",
-					Message: "email",
+					Key: "email",
 				},
 			},
 		},
@@ -93,8 +90,7 @@ func TestEmail(t *testing.T) {
 			},
 			expected: []*validationErrors{
 				{
-					Key:     "email",
-					Message: "email",
+					Key: "email",
 				},
 			},
 		},
@@ -105,8 +101,7 @@ func TestEmail(t *testing.T) {
 			},
 			expected: []*validationErrors{
 				{
-					Key:     "email",
-					Message: "email",
+					Key: "email",
 				},
 			},
 		},
@@ -117,8 +112,7 @@ func TestEmail(t *testing.T) {
 			},
 			expected: []*validationErrors{
 				{
-					Key:     "email",
-					Message: "email",
+					Key: "email",
 				},
 			},
 		},
@@ -129,8 +123,7 @@ func TestEmail(t *testing.T) {
 			},
 			expected: []*validationErrors{
 				{
-					Key:     "email",
-					Message: "email",
+					Key: "email",
 				},
 			},
 		},

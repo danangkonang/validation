@@ -2,7 +2,9 @@ package validation
 
 import (
 	"errors"
+	"html/template"
 	"reflect"
+	"strconv"
 	"strings"
 )
 
@@ -11,18 +13,8 @@ type Validation struct {
 }
 
 func New() *Validation {
-	data := map[string]string{
-		"required":  "this field is required",
-		"alpha":     "this field is required",
-		"alphanum":  "this field is required",
-		"number":    "this field is required",
-		"numeric":   "this field is required",
-		"email":     "this field is required",
-		"latitude":  "this field is required",
-		"longitude": "this field is required",
-	}
 	srv := &Validation{
-		Language: data,
+		Language: Lang,
 	}
 	return srv
 }
@@ -38,24 +30,58 @@ func (s *Validation) SetLanguage(lang map[string]string) {
 }
 
 type validationErrors struct {
-	Key     string `json:"key,omitempty"`
-	Message string `json:"message,omitempty"`
+	Key     string   `json:"key,omitempty"`
+	Message []string `json:"message,omitempty"`
+}
+
+func format(s string, v interface{}) string {
+	t1 := template.New("t1")
+	t1 = template.Must(t1.Parse(s))
+	sb := new(strings.Builder)
+	t1.Execute(sb, v)
+	return sb.String()
 }
 
 func (s *Validation) MustValid(data interface{}) ([]*validationErrors, error) {
 	typeT := reflect.TypeOf(data)
+	out := make([]*validationErrors, 0)
 	for i := 0; i < typeT.NumField(); i++ {
 		field := typeT.Field(i)
+		var key string
+		if field.Tag.Get("json") == "" {
+			key = field.Name
+		} else {
+			key = strings.Split(field.Tag.Get("json"), ",")[0]
+		}
 		validate := field.Tag.Get("validate")
-		key := strings.Split(field.Tag.Get("json"), ",")[0]
 		if validate != "" {
 			rules := strings.Split(validate, ",")
-			out := make([]*validationErrors, 0)
 			formErr := new(validationErrors)
 			msg := []string{}
 			for _, rule := range rules {
 				value := reflect.ValueOf(data).FieldByName(field.Name)
-				switch rule {
+				rl := strings.Split(rule, "=")
+				switch rl[0] {
+				case "eqfield":
+					ok, _ := reflect.TypeOf(data).FieldByName(rl[1])
+					pp := strings.Split(ok.Tag.Get("json"), ",")[0]
+					if !isEqualField(value, reflect.ValueOf(data).FieldByName(rl[1]).String()) {
+						msg = append(msg, format(s.Language["eqfield"], pp))
+					}
+				case "min":
+					mn, err := strconv.Atoi(rl[1])
+					if err == nil {
+						if !isMinimum(value, mn) {
+							msg = append(msg, format(s.Language["min"], mn))
+						}
+					}
+				case "max":
+					mx, err := strconv.Atoi(rl[1])
+					if err == nil {
+						if !isMaximum(value, mx) {
+							msg = append(msg, format(s.Language["max"], mx))
+						}
+					}
 				case "required":
 					if !isRequired(value) {
 						msg = append(msg, s.Language["required"])
@@ -88,16 +114,41 @@ func (s *Validation) MustValid(data interface{}) ([]*validationErrors, error) {
 					if !isLongitude(value) {
 						msg = append(msg, s.Language["longitude"])
 					}
+				case "ip":
+					if !isIP(value) {
+						msg = append(msg, s.Language["ip"])
+					}
+				case "boolean":
+					if !isBoolean(value) {
+						msg = append(msg, s.Language["boolean"])
+					}
+				case "ipv4":
+					if !isIPV4(value) {
+						msg = append(msg, s.Language["ipv4"])
+					}
+				case "ipv6":
+					if !isIPV6(value) {
+						msg = append(msg, s.Language["ipv6"])
+					}
+				case "url":
+					if !isURL(value) {
+						msg = append(msg, s.Language["url"])
+					}
+				case "date":
+					if !isDate(value) {
+						msg = append(msg, s.Language["date"])
+					}
 				}
 			}
-			formErr.Message = strings.Join(msg, ",")
-			formErr.Key = key
-			out = append(out, formErr)
-			if len(out) > 0 {
-				return out, errors.New("form error")
+			if len(msg) > 0 {
+				formErr.Message = msg
+				formErr.Key = key
+				out = append(out, formErr)
 			}
 		}
 	}
-
+	if len(out) > 0 {
+		return out, errors.New("form error")
+	}
 	return nil, nil
 }
