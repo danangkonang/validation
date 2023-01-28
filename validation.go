@@ -30,6 +30,7 @@ func (s *Validation) SetLanguage(lang map[string]string) {
 }
 
 type ValidationErrors struct {
+	Index   string   `json:"index,omitempty"`
 	Key     string   `json:"key,omitempty"`
 	Message []string `json:"message,omitempty"`
 }
