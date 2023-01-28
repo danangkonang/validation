@@ -1,4 +1,4 @@
-# validation
+# Simple GoLang Validation
 
 ## Example
 
@@ -33,27 +33,27 @@ func main() {
 	if err != nil {
 		userJson, _ := json.Marshal(errors)
 		fmt.Println(string(userJson))
-        // [
-        //   {
-        //     "key": "username",
-        //     "message": [
-        //       "your message",
-        //       "This field must be a valid email address"
-        //     ]
-        //   },
-        //   {
-        //     "key": "password",
-        //     "message": [
-        //       "minimum 20 char"
-        //     ]
-        //   },
-        //   {
-        //     "key": "confirm_password",
-        //     "message": [
-        //       "This field must be a equal with password"
-        //     ]
-        //   }
-        // ]
+		// [
+		//   {
+		//     "key": "username",
+		//     "message": [
+		//       "your message",
+		//       "This field must be a valid email address"
+		//     ]
+		//   },
+		//   {
+		//     "key": "password",
+		//     "message": [
+		//       "minimum 20 char"
+		//     ]
+		//   },
+		//   {
+		//     "key": "confirm_password",
+		//     "message": [
+		//       "This field must be a equal with password"
+		//     ]
+		//   }
+		// ]
 	}
 }
 
