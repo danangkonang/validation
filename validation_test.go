@@ -13,7 +13,7 @@ func TestRequired(t *testing.T) {
 	models := []struct {
 		name     string
 		data     T
-		expected []*validationErrors
+		expected []*ValidationErrors
 	}{
 		{
 			name: "required ok",
@@ -26,7 +26,7 @@ func TestRequired(t *testing.T) {
 			data: T{
 				Required: "",
 			},
-			expected: []*validationErrors{
+			expected: []*ValidationErrors{
 				{
 					Key: "required",
 				},
@@ -53,7 +53,7 @@ func TestEmail(t *testing.T) {
 	models := []struct {
 		name     string
 		data     T
-		expected []*validationErrors
+		expected []*ValidationErrors
 	}{
 		{
 			name: "email ok",
@@ -66,7 +66,7 @@ func TestEmail(t *testing.T) {
 			data: T{
 				Value: "",
 			},
-			expected: []*validationErrors{
+			expected: []*ValidationErrors{
 				{
 					Key: "email",
 				},
@@ -77,7 +77,7 @@ func TestEmail(t *testing.T) {
 			data: T{
 				Value: "email",
 			},
-			expected: []*validationErrors{
+			expected: []*ValidationErrors{
 				{
 					Key: "email",
 				},
@@ -88,7 +88,7 @@ func TestEmail(t *testing.T) {
 			data: T{
 				Value: "email@",
 			},
-			expected: []*validationErrors{
+			expected: []*ValidationErrors{
 				{
 					Key: "email",
 				},
@@ -99,7 +99,7 @@ func TestEmail(t *testing.T) {
 			data: T{
 				Value: "@email",
 			},
-			expected: []*validationErrors{
+			expected: []*ValidationErrors{
 				{
 					Key: "email",
 				},
@@ -110,7 +110,7 @@ func TestEmail(t *testing.T) {
 			data: T{
 				Value: "@email.com",
 			},
-			expected: []*validationErrors{
+			expected: []*ValidationErrors{
 				{
 					Key: "email",
 				},
@@ -121,7 +121,7 @@ func TestEmail(t *testing.T) {
 			data: T{
 				Value: "email.com",
 			},
-			expected: []*validationErrors{
+			expected: []*ValidationErrors{
 				{
 					Key: "email",
 				},

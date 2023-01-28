@@ -29,7 +29,7 @@ func (s *Validation) SetLanguage(lang map[string]string) {
 	s.Language = lang
 }
 
-type validationErrors struct {
+type ValidationErrors struct {
 	Key     string   `json:"key,omitempty"`
 	Message []string `json:"message,omitempty"`
 }
@@ -42,9 +42,9 @@ func format(s string, v interface{}) string {
 	return sb.String()
 }
 
-func (s *Validation) MustValid(data interface{}) ([]*validationErrors, error) {
+func (s *Validation) MustValid(data interface{}) ([]*ValidationErrors, error) {
 	typeT := reflect.TypeOf(data)
-	out := make([]*validationErrors, 0)
+	out := make([]*ValidationErrors, 0)
 	for i := 0; i < typeT.NumField(); i++ {
 		field := typeT.Field(i)
 		var key string
@@ -56,7 +56,7 @@ func (s *Validation) MustValid(data interface{}) ([]*validationErrors, error) {
 		validate := field.Tag.Get("validate")
 		if validate != "" {
 			rules := strings.Split(validate, ",")
-			formErr := new(validationErrors)
+			formErr := new(ValidationErrors)
 			msg := []string{}
 			for _, rule := range rules {
 				value := reflect.ValueOf(data).FieldByName(field.Name)
