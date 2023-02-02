@@ -36,7 +36,7 @@ func TestRequired(t *testing.T) {
 	v := New()
 	for _, m := range models {
 		t.Run(m.name, func(t *testing.T) {
-			r, err := v.MustValid(m.data)
+			r, err := v.Validate(m.data)
 			if err != nil {
 				require.Equal(t, m.expected, r)
 			} else {
@@ -131,7 +131,7 @@ func TestEmail(t *testing.T) {
 	v := New()
 	for _, m := range models {
 		t.Run(m.name, func(t *testing.T) {
-			r, err := v.MustValid(m.data)
+			r, err := v.Validate(m.data)
 			if err != nil {
 				require.Equal(t, m.expected, r)
 			} else {
