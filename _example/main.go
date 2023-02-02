@@ -24,9 +24,9 @@ func main() {
 		"min":      "minimum {{.}} char",
 	}
 	a.SetLanguage(customMessage)
-	errors, err := a.MustValid(data)
+	ValidationErrors, err := a.Validate(data)
 	if err != nil {
-		userJson, _ := json.Marshal(errors)
+		userJson, _ := json.Marshal(ValidationErrors)
 		fmt.Println(string(userJson))
 	}
 }
