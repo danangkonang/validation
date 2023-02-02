@@ -3,6 +3,8 @@ package validation
 import (
 	"errors"
 	"html/template"
+	"image"
+	"os"
 	"reflect"
 	"strconv"
 	"strings"
@@ -43,7 +45,7 @@ func format(s string, v interface{}) string {
 	return sb.String()
 }
 
-func (s *Validation) MustValid(data interface{}) ([]*ValidationErrors, error) {
+func (s *Validation) Validate(data interface{}) ([]*ValidationErrors, error) {
 	typeT := reflect.TypeOf(data)
 	out := make([]*ValidationErrors, 0)
 	for i := 0; i < typeT.NumField(); i++ {
@@ -150,6 +152,59 @@ func (s *Validation) MustValid(data interface{}) ([]*ValidationErrors, error) {
 	}
 	if len(out) > 0 {
 		return out, errors.New("form error")
+	}
+	return nil, nil
+}
+
+func (s *Validation) FileValidate(f *os.File, rules string) (*ValidationErrors, error) {
+	formErr := new(ValidationErrors)
+	msg := []string{}
+
+	for _, v := range strings.Split(rules, ",") {
+		rv := strings.Split(v, "=")
+		switch rv[0] {
+		case "maxsize":
+			fi, _ := f.Stat()
+			it, _ := strconv.ParseInt(rv[1], 0, 64)
+			if fi.Size() > it {
+				msg = append(msg, format(s.Language["maxsize"], it))
+			}
+		case "minsize":
+			fi, _ := f.Stat()
+			it, _ := strconv.ParseInt(rv[1], 0, 64)
+			if fi.Size() < it {
+				msg = append(msg, format(s.Language["minsize"], it))
+			}
+		case "maxwidth":
+			c, _, _ := image.DecodeConfig(f)
+			it, _ := strconv.ParseInt(rv[1], 0, 64)
+			if int64(c.Width) > it {
+				msg = append(msg, format(s.Language["maxwidth"], it))
+			}
+		case "minwidth":
+			c, _, _ := image.DecodeConfig(f)
+			it, _ := strconv.ParseInt(rv[1], 0, 64)
+			if int64(c.Width) < it {
+				msg = append(msg, format(s.Language["minwidth"], it))
+			}
+		case "minhight":
+			c, _, _ := image.DecodeConfig(f)
+			it, _ := strconv.ParseInt(rv[1], 0, 64)
+			if int64(c.Height) < it {
+				msg = append(msg, format(s.Language["minhight"], it))
+			}
+		case "maxhight":
+			c, _, _ := image.DecodeConfig(f)
+			it, _ := strconv.ParseInt(rv[1], 0, 64)
+			if int64(c.Height) > it {
+				msg = append(msg, format(s.Language["maxhight"], it))
+			}
+		}
+	}
+	if len(msg) > 0 {
+		formErr.Message = msg
+		formErr.Key = f.Name()
+		return formErr, errors.New("form error")
 	}
 	return nil, nil
 }
