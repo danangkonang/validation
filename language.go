@@ -19,5 +19,11 @@ var (
 		"min":       "This field must be a minimum {{.}}",
 		"max":       "This field must be a maximum {{.}} charakter",
 		"eqfield":   "This field must be a equal with {{.}}",
+		"maxsize":   "This field must be a maximum size {{.}}",
+		"minsize":   "This field must be a minimum size {{.}}",
+		"maxwidth":  "This field must be a maximum width {{.}}",
+		"minwidth":  "This field must be a minimum width {{.}}",
+		"maxhight":  "This field must be a maximum hight {{.}}",
+		"minhight":  "This field must be a minimum hight {{.}}",
 	}
 )
