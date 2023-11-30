@@ -7,7 +7,21 @@ import (
 )
 
 func isRequired(field reflect.Value) bool {
-	return field.IsValid() && field.Interface() != reflect.Zero(field.Type()).Interface()
+	// fmt.Println(field.Kind())
+	// fmt.Println(field.IsValid())
+	// fmt.Println(field.Interface())
+	// fmt.Println(reflect.Zero(field.Type()).Interface())
+	// return field.IsValid() && (field.Interface() != reflect.Zero(field.Type()).Interface())
+	// return true
+	switch field.Kind() {
+	case reflect.Slice, reflect.Map, reflect.Ptr, reflect.Interface, reflect.Chan, reflect.Func:
+		return !field.IsNil()
+	default:
+		// if fl.(*validate).fldIsPointer && field.Interface() != nil {
+		// 	return true
+		// }
+		return field.IsValid() && field.Interface() != reflect.Zero(field.Type()).Interface()
+	}
 }
 
 func isAlpha(fl reflect.Value) bool {
