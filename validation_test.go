@@ -8,27 +8,28 @@ import (
 
 func TestRequired(t *testing.T) {
 	type T struct {
-		Required string `json:"required" validate:"required"`
+		Data string `json:"data" validate:"required"`
 	}
 	models := []struct {
 		name     string
 		data     T
-		expected []*ValidationErrors
+		expected []*ValidationErrorMessage
 	}{
 		{
 			name: "required ok",
 			data: T{
-				Required: "foo",
+				Data: "foo",
 			},
 		},
 		{
 			name: "required bad",
 			data: T{
-				Required: "",
+				Data: "",
 			},
-			expected: []*ValidationErrors{
+			expected: []*ValidationErrorMessage{
 				{
-					Key: "required",
+					Field:   "data",
+					Message: []interface{}{"This field is required"},
 				},
 			},
 		},
@@ -46,84 +47,131 @@ func TestRequired(t *testing.T) {
 	}
 }
 
+func TestSubRequired(t *testing.T) {
+	type Children struct {
+		Name   string `json:"name" validate:"required"`
+		Active bool   `json:"active" validate:"required"`
+		Level  string `json:"level" enum:"beginner,intermediate,advanced"`
+	}
+	type Parent struct {
+		UserId   int64      `json:"user_id" validate:"required"`
+		Children []Children `json:"skill" validate:"required"`
+	}
+	models := []struct {
+		name     string
+		data     Parent
+		expected []*ValidationErrorMessage
+	}{
+		{
+			name: "required ok",
+			data: Parent{
+				UserId: 1,
+				Children: []Children{
+					{
+						Name:   "foo",
+						Active: true,
+						Level:  "beginner",
+					},
+				},
+			},
+		},
+	}
+	v := New()
+	for _, m := range models {
+		t.Run(m.name, func(t *testing.T) {
+			r, err := v.Validate(m.data)
+			if err != nil {
+				require.Equal(t, m.expected, r)
+			} else {
+				require.Equal(t, nil, err)
+			}
+		})
+	}
+}
 func TestEmail(t *testing.T) {
 	type T struct {
-		Value string `json:"email" validate:"email"`
+		Data string `json:"email" validate:"email"`
 	}
 	models := []struct {
 		name     string
 		data     T
-		expected []*ValidationErrors
+		expected []*ValidationErrorMessage
 	}{
 		{
 			name: "email ok",
 			data: T{
-				Value: "foo@email.com",
+				Data: "foo@email.com",
 			},
 		},
 		{
 			name: "empty email",
 			data: T{
-				Value: "",
+				Data: "",
 			},
-			expected: []*ValidationErrors{
+			expected: []*ValidationErrorMessage{
 				{
-					Key: "email",
+					Field:   "email",
+					Message: []interface{}{"This field must be a valid email address"},
 				},
 			},
 		},
 		{
 			name: "email bad 1",
 			data: T{
-				Value: "email",
+				Data: "email",
 			},
-			expected: []*ValidationErrors{
+			expected: []*ValidationErrorMessage{
 				{
-					Key: "email",
+					Field:   "email",
+					Message: []interface{}{"This field must be a valid email address"},
 				},
 			},
 		},
 		{
 			name: "email bad 2",
 			data: T{
-				Value: "email@",
+				Data: "email@",
 			},
-			expected: []*ValidationErrors{
+			expected: []*ValidationErrorMessage{
 				{
-					Key: "email",
+					Field:   "email",
+					Message: []interface{}{"This field must be a valid email address"},
 				},
 			},
 		},
 		{
 			name: "email bad 3",
 			data: T{
-				Value: "@email",
+				Data: "@email",
 			},
-			expected: []*ValidationErrors{
+			expected: []*ValidationErrorMessage{
 				{
-					Key: "email",
+					Field:   "email",
+					Message: []interface{}{"This field must be a valid email address"},
 				},
 			},
 		},
 		{
 			name: "email bad 4",
 			data: T{
-				Value: "@email.com",
+				Data: "@email.com",
 			},
-			expected: []*ValidationErrors{
+			expected: []*ValidationErrorMessage{
 				{
-					Key: "email",
+					Field:   "email",
+					Message: []interface{}{"This field must be a valid email address"},
 				},
 			},
 		},
 		{
 			name: "email bad 5",
 			data: T{
-				Value: "email.com",
+				Data: "email.com",
 			},
-			expected: []*ValidationErrors{
+			expected: []*ValidationErrorMessage{
 				{
-					Key: "email",
+					Field:   "email",
+					Message: []interface{}{"This field must be a valid email address"},
 				},
 			},
 		},

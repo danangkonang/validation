@@ -13,46 +13,66 @@ import (
 )
 
 func main() {
+	type Children struct {
+		Level string `json:"level" enum:"beginner,intermediate,advanced"`
+	}
 	type T struct {
-		Username        string `json:"username" validate:"required,email"`
-		Password        string `json:"password" validate:"min=20"`
-		ConfirmPassword string `json:"confirm_password" validate:"eqfield=Password"`
+		Username        string     `json:"username" validate:"required,email"`
+		Password        string     `json:"password" validate:"min=20"`
+		ConfirmPassword string     `json:"confirm_password" validate:"eqfield=Password"`
+		Children        []Children `json:"children" validate:"required"`
 	}
 	data := T{
 		Username:        "",
 		Password:        "foo",
 		ConfirmPassword: "bar",
+		Children: []Children{
+			{
+				Level: "",
+			},
+		},
 	}
-	a := validation.New()
+	v := validation.New()
 	customMessage := map[string]string{
 		"required": "your custom message",
 		"min":      "minimum {{.}} char",
 	}
-  a.SetLanguage(customMessage)
-	ValidationErrors, err := a.Validate(data)
+	v.SetLanguage(customMessage)
+	ValidationErrorMessage, err := v.Validate(data)
 	if err != nil {
-		userJson, _ := json.Marshal(ValidationErrors)
+		userJson, _ := json.Marshal(ValidationErrorMessage)
 		fmt.Println(string(userJson))
 		// [
-		//   {
-		//     "key": "username",
-		//     "message": [
-		//       "your message",
-		//       "This field must be a valid email address"
-		//     ]
-		//   },
-		//   {
-		//     "key": "password",
-		//     "message": [
-		//       "minimum 20 char"
-		//     ]
-		//   },
-		//   {
-		//     "key": "confirm_password",
-		//     "message": [
-		//       "This field must be a equal with password"
-		//     ]
-		//   }
+		// 	{
+		// 		"key": "username",
+		// 		"message": [
+		// 			"This field is required",
+		// 			"This field must be a valid email address"
+		// 		]
+		// 	},
+		// 	{
+		// 		"key": "password",
+		// 		"message": [
+		// 			"This field must be a minimum 20"
+		// 		]
+		// 	},
+		// 	{
+		// 		"key": "confirm_password",
+		// 		"message": [
+		// 			"This field must be a equal with password"
+		// 		]
+		// 	},
+		// 	{
+		// 		"key": "children",
+		// 		"message": [
+		// 			{
+		// 				"key": "level",
+		// 				"message": [
+		// 					"This field must be one of [beginner,intermediate,advanced]"
+		// 				]
+		// 			}
+		// 		]
+		// 	}
 		// ]
 	}
 }
@@ -77,3 +97,4 @@ func main() {
 - min
 - max
 - eqfield
+- enum

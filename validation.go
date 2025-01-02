@@ -2,12 +2,14 @@ package validation
 
 import (
 	"errors"
+	"fmt"
 	"html/template"
 	"image"
 	"os"
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type Validation struct {
@@ -31,10 +33,10 @@ func (s *Validation) SetLanguage(lang map[string]string) {
 	s.Language = lang
 }
 
-type ValidationErrors struct {
-	Index   string   `json:"index,omitempty"`
-	Key     string   `json:"key,omitempty"`
-	Message []string `json:"message,omitempty"`
+type ValidationErrorMessage struct {
+	Index   string        `json:"index,omitempty"`
+	Field   string        `json:"key,omitempty"`
+	Message []interface{} `json:"message,omitempty"`
 }
 
 func format(s string, v interface{}) string {
@@ -45,24 +47,26 @@ func format(s string, v interface{}) string {
 	return sb.String()
 }
 
-func (s *Validation) Validate(data interface{}) ([]*ValidationErrors, error) {
+func (s *Validation) Validate(data interface{}) ([]*ValidationErrorMessage, error) {
 	typeT := reflect.TypeOf(data)
-	out := make([]*ValidationErrors, 0)
+	typeV := reflect.ValueOf(data)
+	out := make([]*ValidationErrorMessage, 0)
 	for i := 0; i < typeT.NumField(); i++ {
-		field := typeT.Field(i)
+		fieldType := typeT.Field(i)
+		fieldValue := typeV.Field(i)
 		var key string
-		if field.Tag.Get("json") == "" {
-			key = field.Name
+		if fieldType.Tag.Get("json") == "" {
+			key = fieldType.Name
 		} else {
-			key = strings.Split(field.Tag.Get("json"), ",")[0]
+			key = strings.Split(fieldType.Tag.Get("json"), ",")[0]
 		}
-		validate := field.Tag.Get("validate")
-		if validate != "" {
-			rules := strings.Split(validate, ",")
-			formErr := new(ValidationErrors)
-			msg := []string{}
+
+		formErr := new(ValidationErrorMessage)
+		msg := []interface{}{}
+		if validate := fieldType.Tag.Get("validate"); validate != "" {
+			rules := strings.Split(strings.ReplaceAll(validate, " ", ""), ",")
 			for _, rule := range rules {
-				value := reflect.ValueOf(data).FieldByName(field.Name)
+				value := reflect.ValueOf(data).FieldByName(fieldType.Name)
 				rl := strings.Split(rule, "=")
 				switch rl[0] {
 				case "eqfield":
@@ -86,8 +90,34 @@ func (s *Validation) Validate(data interface{}) ([]*ValidationErrors, error) {
 						}
 					}
 				case "required":
-					if !isRequired(value) {
-						msg = append(msg, s.Language["required"])
+					switch value.Kind() {
+					case reflect.Slice:
+						if value.Len() == 0 {
+							msg = append(msg, s.Language["required"])
+						}
+						for j := 0; j < value.Len(); j++ {
+							validationErrorMessage, err := s.Validate(value.Index(j).Interface())
+							if err != nil {
+								for _, a := range validationErrorMessage {
+									msg = append(msg, a)
+								}
+							}
+						}
+					case reflect.String:
+						if !isRequired(value) {
+							msg = append(msg, s.Language["required"])
+						}
+					case reflect.Struct:
+						if value.Type() == reflect.TypeOf(time.Time{}) {
+							if value.Interface().(time.Time).IsZero() {
+								msg = append(msg, s.Language["required"])
+							}
+						}
+					case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+						if value.Int() == 0 {
+							msg = append(msg, s.Language["required"])
+							// return fmt.Errorf("field %s is required and must not be 0", fieldType.Name)
+						}
 					}
 				case "alpha":
 					if !isAlpha(value) {
@@ -143,11 +173,20 @@ func (s *Validation) Validate(data interface{}) ([]*ValidationErrors, error) {
 					}
 				}
 			}
-			if len(msg) > 0 {
-				formErr.Message = msg
-				formErr.Key = key
-				out = append(out, formErr)
+		}
+		if enumTag := fieldType.Tag.Get("enum"); enumTag != "" {
+			allowedValues := map[string]bool{}
+			for _, val := range split(enumTag, ",") {
+				allowedValues[val] = true
 			}
+			if !allowedValues[fieldValue.String()] {
+				msg = append(msg, format(s.Language["enum"], fmt.Sprintf("[%s]", enumTag)))
+			}
+		}
+		if len(msg) > 0 {
+			formErr.Message = msg
+			formErr.Field = key
+			out = append(out, formErr)
 		}
 	}
 	if len(out) > 0 {
@@ -156,9 +195,9 @@ func (s *Validation) Validate(data interface{}) ([]*ValidationErrors, error) {
 	return nil, nil
 }
 
-func (s *Validation) FileValidate(f *os.File, rules string) (*ValidationErrors, error) {
-	formErr := new(ValidationErrors)
-	msg := []string{}
+func (s *Validation) FileValidate(f *os.File, rules string) (*ValidationErrorMessage, error) {
+	formErr := new(ValidationErrorMessage)
+	msg := []interface{}{}
 
 	for _, v := range strings.Split(rules, ",") {
 		rv := strings.Split(v, "=")
@@ -203,8 +242,21 @@ func (s *Validation) FileValidate(f *os.File, rules string) (*ValidationErrors, 
 	}
 	if len(msg) > 0 {
 		formErr.Message = msg
-		formErr.Key = f.Name()
+		formErr.Field = f.Name()
 		return formErr, errors.New("form error")
 	}
 	return nil, nil
+}
+
+func split(s string, delim string) []string {
+	var result []string
+	start := 0
+	for i := 0; i < len(s); i++ {
+		if string(s[i]) == delim {
+			result = append(result, s[start:i])
+			start = i + 1
+		}
+	}
+	result = append(result, s[start:])
+	return result
 }

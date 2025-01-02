@@ -1,6 +1,6 @@
 package validation
 
-func Check(data interface{}) ([]*ValidationErrors, error) {
+func Check(data interface{}) ([]*ValidationErrorMessage, error) {
 	a := New()
 	return a.Validate(data)
 }

@@ -25,5 +25,6 @@ var (
 		"minwidth":  "This field must be a minimum width {{.}}",
 		"maxhight":  "This field must be a maximum hight {{.}}",
 		"minhight":  "This field must be a minimum hight {{.}}",
+		"enum":      "This field must be one of {{.}}",
 	}
 )
