@@ -1,5 +1,11 @@
 # Simple GoLang Validation
 
+## Install
+
+```bash
+go get github.com/danangkonang/validation
+```
+
 ## Example
 
 ```go
