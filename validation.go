@@ -113,11 +113,11 @@ func (s *Validation) Validate(data interface{}) ([]*ValidationErrorMessage, erro
 								msg = append(msg, s.Language["required"])
 							}
 						}
-					case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-						if value.Int() == 0 {
-							msg = append(msg, s.Language["required"])
-							// return fmt.Errorf("field %s is required and must not be 0", fieldType.Name)
-						}
+						// case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+						// 	if value.Int() == 0 {
+						// 		msg = append(msg, s.Language["required"])
+						// 		// return fmt.Errorf("field %s is required and must not be 0", fieldType.Name)
+						// 	}
 					}
 				case "alpha":
 					if !isAlpha(value) {
