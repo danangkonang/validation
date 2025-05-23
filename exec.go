@@ -128,17 +128,53 @@ func isLatitude(fl reflect.Value) bool {
 }
 
 func isMinimum(fl reflect.Value, rule int) bool {
-	if len(fl.String()) >= rule {
-		return true
-	} else {
+	// if len(fl.String()) >= rule {
+	// 	return true
+	// } else {
+	// 	return false
+	// }
+	if !fl.IsValid() {
+		return false
+	}
+
+	switch fl.Kind() {
+	case reflect.String:
+		return len(fl.String()) >= rule
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return fl.Int() >= int64(rule)
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		return fl.Uint() >= uint64(rule)
+	case reflect.Float32, reflect.Float64:
+		return fl.Float() >= float64(rule)
+	case reflect.Slice, reflect.Array:
+		return fl.Len() >= rule
+	default:
 		return false
 	}
 }
 
 func isMaximum(fl reflect.Value, rule int) bool {
-	if len(fl.String()) <= rule {
-		return true
-	} else {
+	// if len(fl.String()) <= rule {
+	// 	return true
+	// } else {
+	// 	return false
+	// }
+	if !fl.IsValid() {
+		return false
+	}
+
+	switch fl.Kind() {
+	case reflect.String:
+		return len(fl.String()) <= rule
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return fl.Int() <= int64(rule)
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		return fl.Uint() <= uint64(rule)
+	case reflect.Float32, reflect.Float64:
+		return fl.Float() <= float64(rule)
+	case reflect.Slice, reflect.Array:
+		return fl.Len() <= rule
+	default:
 		return false
 	}
 }

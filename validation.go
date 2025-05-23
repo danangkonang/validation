@@ -77,6 +77,7 @@ func (s *Validation) Validate(data interface{}) ([]*ValidationErrorMessage, erro
 					}
 				case "min":
 					mn, err := strconv.Atoi(rl[1])
+					fmt.Println(mn)
 					if err == nil {
 						if !isMinimum(value, mn) {
 							msg = append(msg, format(s.Language["min"], mn))

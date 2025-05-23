@@ -10,22 +10,22 @@ import (
 func main() {
 	type T struct {
 		// Username string `json:"username" validate:"required,email"`
-		// Password        string `json:"password" validate:"min=20"`
+		// Password string `json:"password" validate:"min=20"`
 		// ConfirmPassword string `json:"confirm_password" validate:"eqfield=Password"`
-		Hobbies []string `json:"hobbies" validate:"required"`
-		// Age     int      `json:"age" validate:"required"`
+		// Hobbies []string `json:"hobbies" validate:"required"`
+		Age int `json:"age" validate:"min=1"`
 	}
 
 	data := T{
 		// Username: "",
 		// Password:        "foo",
 		// ConfirmPassword: "bar",
-		// Age: 0,
+		Age: 0,
 	}
 	a := validation.New()
 	customMessage := map[string]string{
 		// "required": "your message",
-		"min": "minimum {{.}} char",
+		// "min": "minimum {{.}} char",
 	}
 	a.SetLanguage(customMessage)
 	ValidationErrors, err := a.Validate(data)
