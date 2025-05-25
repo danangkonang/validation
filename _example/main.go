@@ -16,12 +16,21 @@ func main() {
 		Age int `json:"age" validate:"min=1"`
 	}
 
-	data := T{
-		// Username: "",
-		// Password:        "foo",
-		// ConfirmPassword: "bar",
-		Age: 0,
+	jsonData := []byte(`{"username": "Alice", "age": null, "password": "foo", "confirm_password": "bar"}`)
+
+	// data := T{
+	// 	// Username: "",
+	// 	// Password:        "foo",
+	// 	// ConfirmPassword: "bar",
+	// 	Age: 0,
+	// }
+	var data T
+	err := json.Unmarshal(jsonData, &data)
+	if err != nil {
+		fmt.Println(err.Error())
+		return
 	}
+
 	a := validation.New()
 	customMessage := map[string]string{
 		// "required": "your message",

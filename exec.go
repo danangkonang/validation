@@ -128,18 +128,14 @@ func isLatitude(fl reflect.Value) bool {
 }
 
 func isMinimum(fl reflect.Value, rule int) bool {
-	// if len(fl.String()) >= rule {
-	// 	return true
-	// } else {
-	// 	return false
-	// }
-	if !fl.IsValid() {
-		return false
+	// Handle invalid or nil values
+	if !fl.IsValid() || (fl.Kind() == reflect.Ptr && fl.IsNil()) {
+		return rule <= 0 // A nil value satisfies min=0, fails otherwise
 	}
 
 	switch fl.Kind() {
 	case reflect.String:
-		return len(fl.String()) >= rule
+		return len(fl.String()) >= rule // or utf8.RuneCountInString(fl.String()) for characters
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		return fl.Int() >= int64(rule)
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
@@ -148,7 +144,11 @@ func isMinimum(fl reflect.Value, rule int) bool {
 		return fl.Float() >= float64(rule)
 	case reflect.Slice, reflect.Array:
 		return fl.Len() >= rule
+	case reflect.Ptr:
+		// Recursively check the dereferenced value
+		return isMinimum(fl.Elem(), rule)
 	default:
+		// Unsupported type, treat as invalid
 		return false
 	}
 }
@@ -159,13 +159,13 @@ func isMaximum(fl reflect.Value, rule int) bool {
 	// } else {
 	// 	return false
 	// }
-	if !fl.IsValid() {
-		return false
+	if !fl.IsValid() || (fl.Kind() == reflect.Ptr && fl.IsNil()) {
+		return rule <= 0 // A nil value satisfies min=0, fails otherwise
 	}
 
 	switch fl.Kind() {
 	case reflect.String:
-		return len(fl.String()) <= rule
+		return len(fl.String()) <= rule // or utf8.RuneCountInString(fl.String()) for characters
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		return fl.Int() <= int64(rule)
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
@@ -174,7 +174,11 @@ func isMaximum(fl reflect.Value, rule int) bool {
 		return fl.Float() <= float64(rule)
 	case reflect.Slice, reflect.Array:
 		return fl.Len() <= rule
+	case reflect.Ptr:
+		// Recursively check the dereferenced value
+		return isMinimum(fl.Elem(), rule)
 	default:
+		// Unsupported type, treat as invalid
 		return false
 	}
 }

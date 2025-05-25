@@ -48,8 +48,20 @@ func format(s string, v interface{}) string {
 }
 
 func (s *Validation) Validate(data interface{}) ([]*ValidationErrorMessage, error) {
-	typeT := reflect.TypeOf(data)
+	if data == nil {
+		return nil, errors.New("input data cannot be nil")
+	}
 	typeV := reflect.ValueOf(data)
+	if typeV.Kind() == reflect.Ptr {
+		if typeV.IsNil() {
+			return nil, errors.New("input data cannot be nil")
+		}
+		typeV = typeV.Elem()
+	}
+	if typeV.Kind() != reflect.Struct {
+		return nil, errors.New("input must be a struct")
+	}
+	typeT := reflect.TypeOf(data)
 	out := make([]*ValidationErrorMessage, 0)
 	for i := 0; i < typeT.NumField(); i++ {
 		fieldType := typeT.Field(i)
@@ -66,8 +78,14 @@ func (s *Validation) Validate(data interface{}) ([]*ValidationErrorMessage, erro
 		if validate := fieldType.Tag.Get("validate"); validate != "" {
 			rules := strings.Split(strings.ReplaceAll(validate, " ", ""), ",")
 			for _, rule := range rules {
+				if rule == "" {
+					continue
+				}
 				value := reflect.ValueOf(data).FieldByName(fieldType.Name)
 				rl := strings.Split(rule, "=")
+				if len(rl) != 2 {
+					continue
+				}
 				switch rl[0] {
 				case "eqfield":
 					ok, _ := reflect.TypeOf(data).FieldByName(rl[1])
