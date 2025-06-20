@@ -13,10 +13,11 @@ func main() {
 		// Password string `json:"password" validate:"min=20"`
 		// ConfirmPassword string `json:"confirm_password" validate:"eqfield=Password"`
 		// Hobbies []string `json:"hobbies" validate:"required"`
-		Age int `json:"age" validate:"min=1"`
+		Age    int   `json:"age" validate:"min=1"`
+		Number []int `json:"number" validate:"required"`
 	}
 
-	jsonData := []byte(`{"username": "Alice", "age": null, "password": "foo", "confirm_password": "bar"}`)
+	jsonData := []byte(`{"username": "Alice", "age": null, "password": "foo", "confirm_password": "bar", "number": []}`)
 
 	// data := T{
 	// 	// Username: "",

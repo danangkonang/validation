@@ -83,25 +83,33 @@ func (s *Validation) Validate(data interface{}) ([]*ValidationErrorMessage, erro
 				}
 				value := reflect.ValueOf(data).FieldByName(fieldType.Name)
 				rl := strings.Split(rule, "=")
-				if len(rl) != 2 {
-					continue
-				}
+				// if len(rl) != 2 {
+				// 	continue
+				// }
 				switch rl[0] {
 				case "eqfield":
+					if len(rl) != 2 {
+						continue
+					}
 					ok, _ := reflect.TypeOf(data).FieldByName(rl[1])
 					pp := strings.Split(ok.Tag.Get("json"), ",")[0]
 					if !isEqualField(value, reflect.ValueOf(data).FieldByName(rl[1]).String()) {
 						msg = append(msg, format(s.Language["eqfield"], pp))
 					}
 				case "min":
+					if len(rl) != 2 {
+						continue
+					}
 					mn, err := strconv.Atoi(rl[1])
-					fmt.Println(mn)
 					if err == nil {
 						if !isMinimum(value, mn) {
 							msg = append(msg, format(s.Language["min"], mn))
 						}
 					}
 				case "max":
+					if len(rl) != 2 {
+						continue
+					}
 					mx, err := strconv.Atoi(rl[1])
 					if err == nil {
 						if !isMaximum(value, mx) {

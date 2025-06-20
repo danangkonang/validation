@@ -47,6 +47,47 @@ func TestRequired(t *testing.T) {
 	}
 }
 
+func TestRequiredInt(t *testing.T) {
+	type T struct {
+		Data []int `json:"data" validate:"required"`
+	}
+	models := []struct {
+		name     string
+		data     T
+		expected []*ValidationErrorMessage
+	}{
+		{
+			name: "required ok",
+			data: T{
+				Data: []int{1},
+			},
+		},
+		{
+			name: "required bad",
+			data: T{
+				Data: []int{},
+			},
+			expected: []*ValidationErrorMessage{
+				{
+					Field:   "data",
+					Message: []interface{}{"This field is required"},
+				},
+			},
+		},
+	}
+	v := New()
+	for _, m := range models {
+		t.Run(m.name, func(t *testing.T) {
+			r, err := v.Validate(m.data)
+			if err != nil {
+				require.Equal(t, m.expected, r)
+			} else {
+				require.Equal(t, nil, err)
+			}
+		})
+	}
+}
+
 func TestSubRequired(t *testing.T) {
 	type Children struct {
 		Name   string `json:"name" validate:"required"`
