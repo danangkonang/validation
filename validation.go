@@ -13,24 +13,39 @@ import (
 )
 
 type Validation struct {
-	Language map[string]string
+	Language         map[string]string
+	customValidators map[string]func(reflect.Value) bool
 }
 
 func New() *Validation {
 	srv := &Validation{
-		Language: Lang,
+		Language:         Lang,
+		customValidators: make(map[string]func(reflect.Value) bool),
 	}
 	return srv
 }
 
 func (s *Validation) SetLanguage(lang map[string]string) {
-	for x, y := range s.Language {
-		if m, n := lang[x]; n {
-			y = m
-		}
-		lang[x] = y
+	// for x, y := range s.Language {
+	// 	if m, n := lang[x]; n {
+	// 		y = m
+	// 	}
+	// 	lang[x] = y
+	// }
+	// s.Language = lang
+	if lang == nil {
+		return
 	}
-	s.Language = lang
+	for key, msg := range lang {
+		s.Language[key] = msg
+	}
+}
+
+func (s *Validation) RegisterValidation(tag string, fn func(reflect.Value) bool) {
+	if s.customValidators == nil {
+		s.customValidators = make(map[string]func(reflect.Value) bool)
+	}
+	s.customValidators[tag] = fn
 }
 
 type ValidationErrorMessage struct {
@@ -52,7 +67,7 @@ func (s *Validation) Validate(data interface{}) ([]*ValidationErrorMessage, erro
 		return nil, errors.New("input data cannot be nil")
 	}
 	typeV := reflect.ValueOf(data)
-	if typeV.Kind() == reflect.Ptr {
+	if typeV.Kind() == reflect.Pointer {
 		if typeV.IsNil() {
 			return nil, errors.New("input data cannot be nil")
 		}
@@ -86,7 +101,8 @@ func (s *Validation) Validate(data interface{}) ([]*ValidationErrorMessage, erro
 				// if len(rl) != 2 {
 				// 	continue
 				// }
-				switch rl[0] {
+				ruleName := rl[0]
+				switch ruleName {
 				case "eqfield":
 					if len(rl) != 2 {
 						continue
@@ -197,6 +213,16 @@ func (s *Validation) Validate(data interface{}) ([]*ValidationErrorMessage, erro
 				case "date":
 					if !isDate(value) {
 						msg = append(msg, s.Language["date"])
+					}
+				default:
+					if fn, ok := s.customValidators[ruleName]; ok {
+						if !fn(value) {
+							if customMsg, exists := s.Language[ruleName]; exists {
+								msg = append(msg, customMsg)
+							} else {
+								msg = append(msg, fmt.Sprintf("Invalid %s", ruleName))
+							}
+						}
 					}
 				}
 			}

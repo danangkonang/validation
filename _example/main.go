@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"reflect"
 
 	"github.com/danangkonang/validation"
 )
@@ -33,6 +34,7 @@ func main() {
 	}
 
 	a := validation.New()
+	a.RegisterValidation("custom", func(v reflect.Value) bool { return true })
 	customMessage := map[string]string{
 		// "required": "your message",
 		// "min": "minimum {{.}} char",
