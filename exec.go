@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
+	"time"
+	_ "time/tzdata"
 )
 
 func isRequired(field reflect.Value) bool {
@@ -185,4 +187,49 @@ func isMaximum(fl reflect.Value, rule int) bool {
 
 func isEqualField(fl reflect.Value, rule string) bool {
 	return fl.String() == rule
+}
+
+func isGTE(v reflect.Value, min float64) bool {
+	switch v.Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return float64(v.Int()) >= min
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		return float64(v.Uint()) >= min
+	case reflect.Float32, reflect.Float64:
+		return v.Float() >= min
+	default:
+		return false
+	}
+}
+
+func isLTE(v reflect.Value, max float64) bool {
+	switch v.Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return float64(v.Int()) <= max
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		return float64(v.Uint()) <= max
+	case reflect.Float32, reflect.Float64:
+		return v.Float() <= max
+	default:
+		return false
+	}
+}
+
+func isTimezone(v reflect.Value) bool {
+	if v.Kind() != reflect.String {
+		return false
+	}
+	_, err := time.LoadLocation(v.String())
+	return err == nil
+}
+
+func isLength(v reflect.Value, l int) bool {
+	switch v.Kind() {
+	case reflect.String:
+		return len(v.String()) == l
+	case reflect.Slice, reflect.Array:
+		return v.Len() == l
+	default:
+		return false
+	}
 }

@@ -132,6 +132,42 @@ func (s *Validation) Validate(data interface{}) ([]*ValidationErrorMessage, erro
 							msg = append(msg, format(s.Language["max"], mx))
 						}
 					}
+				case "len":
+					if len(rl) != 2 {
+						continue
+					}
+					l, err := strconv.Atoi(rl[1])
+					if err != nil {
+						continue
+					}
+					if !isLength(value, l) {
+						msg = append(msg, format(s.Language["len"], l))
+					}
+
+				case "gte":
+					if len(rl) != 2 {
+						continue
+					}
+					val, err := strconv.ParseFloat(rl[1], 64)
+					if err != nil {
+						continue
+					}
+					if !isGTE(value, val) {
+						msg = append(msg, format(s.Language["gte"], rl[1]))
+					}
+
+				case "lte":
+					if len(rl) != 2 {
+						continue
+					}
+					val, err := strconv.ParseFloat(rl[1], 64)
+					if err != nil {
+						continue
+					}
+					if !isLTE(value, val) {
+						msg = append(msg, format(s.Language["lte"], rl[1]))
+					}
+
 				case "required":
 					switch value.Kind() {
 					case reflect.Slice:
@@ -214,6 +250,11 @@ func (s *Validation) Validate(data interface{}) ([]*ValidationErrorMessage, erro
 					if !isDate(value) {
 						msg = append(msg, s.Language["date"])
 					}
+				case "timezone":
+					if !isTimezone(value) {
+						msg = append(msg, s.Language["timezone"])
+					}
+
 				default:
 					if fn, ok := s.customValidators[ruleName]; ok {
 						if !fn(value) {

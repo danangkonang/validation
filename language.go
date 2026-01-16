@@ -26,5 +26,9 @@ var (
 		"maxhight":  "This field must be a maximum hight {{.}}",
 		"minhight":  "This field must be a minimum hight {{.}}",
 		"enum":      "This field must be one of {{.}}",
+		"len":       "length must be exactly {{.}}",
+		"gte":       "must be greater than or equal to {{.}}",
+		"lte":       "must be less than or equal to {{.}}",
+		"timezone":  "invalid timezone",
 	}
 )
