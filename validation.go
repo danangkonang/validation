@@ -26,13 +26,6 @@ func New() *Validation {
 }
 
 func (s *Validation) SetLanguage(lang map[string]string) {
-	// for x, y := range s.Language {
-	// 	if m, n := lang[x]; n {
-	// 		y = m
-	// 	}
-	// 	lang[x] = y
-	// }
-	// s.Language = lang
 	if lang == nil {
 		return
 	}
@@ -97,6 +90,18 @@ func (s *Validation) Validate(data interface{}) ([]*ValidationErrorMessage, erro
 					continue
 				}
 				value := reflect.ValueOf(data).FieldByName(fieldType.Name)
+				hasOmitEmpty := false
+				for _, r := range rules {
+					if r == "omitempty" {
+						hasOmitEmpty = true
+						break
+					}
+				}
+				if hasOmitEmpty && isEmptyValue(value) {
+					// skip semua validation untuk field ini
+					break
+				}
+
 				rl := strings.Split(rule, "=")
 				// if len(rl) != 2 {
 				// 	continue
@@ -254,7 +259,8 @@ func (s *Validation) Validate(data interface{}) ([]*ValidationErrorMessage, erro
 					if !isTimezone(value) {
 						msg = append(msg, s.Language["timezone"])
 					}
-
+				case "omitempty":
+					continue
 				default:
 					if fn, ok := s.customValidators[ruleName]; ok {
 						if !fn(value) {

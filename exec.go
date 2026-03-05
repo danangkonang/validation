@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
+	"strings"
 	"time"
 	_ "time/tzdata"
 )
@@ -232,4 +233,20 @@ func isLength(v reflect.Value, l int) bool {
 	default:
 		return false
 	}
+}
+
+func isEmptyValue(v reflect.Value) bool {
+	switch v.Kind() {
+	case reflect.String:
+		return strings.TrimSpace(v.String()) == ""
+	case reflect.Slice, reflect.Array:
+		return v.Len() == 0
+	case reflect.Pointer, reflect.Interface:
+		return v.IsNil()
+	case reflect.Struct:
+		if v.Type() == reflect.TypeOf(time.Time{}) {
+			return v.Interface().(time.Time).IsZero()
+		}
+	}
+	return false
 }
