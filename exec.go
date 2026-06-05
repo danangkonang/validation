@@ -147,7 +147,7 @@ func isMinimum(fl reflect.Value, rule int) bool {
 		return fl.Float() >= float64(rule)
 	case reflect.Slice, reflect.Array:
 		return fl.Len() >= rule
-	case reflect.Ptr:
+	case reflect.Pointer:
 		// Recursively check the dereferenced value
 		return isMinimum(fl.Elem(), rule)
 	default:
@@ -177,9 +177,9 @@ func isMaximum(fl reflect.Value, rule int) bool {
 		return fl.Float() <= float64(rule)
 	case reflect.Slice, reflect.Array:
 		return fl.Len() <= rule
-	case reflect.Ptr:
+	case reflect.Pointer:
 		// Recursively check the dereferenced value
-		return isMinimum(fl.Elem(), rule)
+		return isMaximum(fl.Elem(), rule)
 	default:
 		// Unsupported type, treat as invalid
 		return false
