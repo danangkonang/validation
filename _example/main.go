@@ -14,12 +14,13 @@ func main() {
 		// Password string `json:"password" validate:"min=20"`
 		// ConfirmPassword string `json:"confirm_password" validate:"eqfield=Password"`
 		// Hobbies []string `json:"hobbies" validate:"required"`
-		Age    int     `json:"age" validate:"min=1"`
-		Number []int   `json:"number" validate:"required"`
-		Cuid2  *string `json:"cuid" validate:"omitempty,len=24"`
+		Age      int     `json:"age" validate:"min=1"`
+		Number   []int   `json:"number" validate:"required"`
+		Cuid2    *string `json:"cuid" validate:"omitempty,len=24"`
+		FullName *string `json:"full_name" validate:"omitempty,min=2,max=200"`
 	}
 
-	jsonData := []byte(`{"username": "Alice", "age": null, "password": "foo", "confirm_password": "bar", "number": [], "cuid": "1"}`)
+	jsonData := []byte(`{"username": "Alice", "age": null, "password": "foo", "confirm_password": "bar", "number": [], "cuid": "1", "full_name": "Danang Rifai"}`)
 
 	// data := T{
 	// 	// Username: "",

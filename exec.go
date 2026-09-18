@@ -1,252 +1,292 @@
 package validation
 
 import (
-	"fmt"
+	"net"
+	"net/url"
 	"reflect"
 	"strconv"
 	"strings"
 	"time"
 	_ "time/tzdata"
+	"unicode/utf8"
 )
 
-func isRequired(field reflect.Value) bool {
-	// fmt.Println(field.Kind())
-	// fmt.Println(field.IsValid())
-	// fmt.Println(field.Interface())
-	// fmt.Println(reflect.Zero(field.Type()).Interface())
-	// return field.IsValid() && (field.Interface() != reflect.Zero(field.Type()).Interface())
-	// return true
-	switch field.Kind() {
-	case reflect.Slice, reflect.Map, reflect.Ptr, reflect.Interface, reflect.Chan, reflect.Func:
-		return !field.IsNil()
-	default:
-		// if fl.(*validate).fldIsPointer && field.Interface() != nil {
-		// 	return true
-		// }
-		return field.IsValid() && field.Interface() != reflect.Zero(field.Type()).Interface()
+func isRequired(value reflect.Value) bool {
+	if !value.IsValid() {
+		return false
 	}
+	if value.Kind() == reflect.Interface || value.Kind() == reflect.Ptr {
+		return !value.IsNil()
+	}
+	if value.Kind() == reflect.Slice || value.Kind() == reflect.Map || value.Kind() == reflect.Array || value.Kind() == reflect.String {
+		return value.Len() > 0
+	}
+	return !value.IsZero()
 }
 
-func isAlpha(fl reflect.Value) bool {
-	return alphaRegex.MatchString(fl.String())
-}
-
-func isAlphanum(fl reflect.Value) bool {
-	return alphaNumericRegex.MatchString(fl.String())
-}
-
-func isBoolean(fl reflect.Value) bool {
-	bools := []string{"0", "1", "true", "false", "True", "False"}
-	for _, b := range bools {
-		if b == fl.String() {
-			return true
+func stringValue(value reflect.Value) (string, bool) {
+	for value.IsValid() && (value.Kind() == reflect.Ptr || value.Kind() == reflect.Interface) {
+		if value.IsNil() {
+			return "", false
 		}
+		value = value.Elem()
 	}
-	return false
+	if !value.IsValid() || value.Kind() != reflect.String {
+		return "", false
+	}
+	return value.String(), true
 }
 
-func isIP(fl reflect.Value) bool {
-	return ipRegex.MatchString(fl.String())
+func runBuiltin(name string, value reflect.Value) bool {
+	switch name {
+	case "alpha":
+		return isAlpha(value)
+	case "alphanum":
+		return isAlphanum(value)
+	case "number":
+		return isNumber(value)
+	case "numeric":
+		return isNumeric(value)
+	case "email":
+		return isEmail(value)
+	case "latitude":
+		return isLatitude(value)
+	case "longitude":
+		return isLongitude(value)
+	case "ip":
+		return isIP(value)
+	case "boolean":
+		return isBoolean(value)
+	case "ipv4":
+		return isIPV4(value)
+	case "ipv6":
+		return isIPV6(value)
+	case "url":
+		return isURL(value)
+	case "date":
+		return isDate(value)
+	case "timezone":
+		return isTimezone(value)
+	default:
+		return false
+	}
 }
 
-// Ref: https://en.wikipedia.org/wiki/IPv4
-func isIPV4(fl reflect.Value) bool {
-	return ipV4Regex.MatchString(fl.String())
+func isAlpha(value reflect.Value) bool {
+	s, ok := stringValue(value)
+	return ok && alphaRegex.MatchString(s)
+}
+func isAlphanum(value reflect.Value) bool {
+	s, ok := stringValue(value)
+	return ok && alphaNumericRegex.MatchString(s)
+}
+func isEmail(value reflect.Value) bool {
+	s, ok := stringValue(value)
+	return ok && emailRegex.MatchString(s)
 }
 
-// Ref: https://en.wikipedia.org/wiki/IPv6
-func isIPV6(fl reflect.Value) bool {
-	return ipV6Regex.MatchString(fl.String())
-}
-
-func isURL(fl reflect.Value) bool {
-	return urlRegex.MatchString(fl.String())
-}
-
-// isDate check the date string is valid or not
-func isDate(fl reflect.Value) bool {
-	return dateRegex.MatchString(fl.String())
-}
-
-func isEmail(fl reflect.Value) bool {
-	return emailRegex.MatchString(fl.String())
-}
-
-func isNumber(fl reflect.Value) bool {
-	switch fl.Kind() {
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr, reflect.Float32, reflect.Float64:
+func isBoolean(value reflect.Value) bool {
+	if value.IsValid() && value.Kind() == reflect.Bool {
 		return true
-	default:
-		return numberRegex.MatchString(fl.String())
 	}
+	s, ok := stringValue(value)
+	return ok && (s == "0" || s == "1" || s == "true" || s == "false" || s == "True" || s == "False")
 }
 
-func isNumeric(fl reflect.Value) bool {
-	switch fl.Kind() {
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr, reflect.Float32, reflect.Float64:
-		return true
-	default:
-		return numericRegex.MatchString(fl.String())
-	}
-}
-
-func isLongitude(fl reflect.Value) bool {
-	field := fl
-	var v string
-	switch field.Kind() {
-	case reflect.String:
-		v = field.String()
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		v = strconv.FormatInt(field.Int(), 10)
-	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-		v = strconv.FormatUint(field.Uint(), 10)
-	case reflect.Float32:
-		v = strconv.FormatFloat(field.Float(), 'f', -1, 32)
-	case reflect.Float64:
-		v = strconv.FormatFloat(field.Float(), 'f', -1, 64)
-	default:
-		panic(fmt.Sprintf("Bad field type %T", field.Interface()))
-	}
-	return longitudeRegex.MatchString(v)
-}
-
-func isLatitude(fl reflect.Value) bool {
-	field := fl
-	var v string
-	switch field.Kind() {
-	case reflect.String:
-		v = field.String()
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		v = strconv.FormatInt(field.Int(), 10)
-	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-		v = strconv.FormatUint(field.Uint(), 10)
-	case reflect.Float32:
-		v = strconv.FormatFloat(field.Float(), 'f', -1, 32)
-	case reflect.Float64:
-		v = strconv.FormatFloat(field.Float(), 'f', -1, 64)
-	default:
-		panic(fmt.Sprintf("Bad field type %T", field.Interface()))
-	}
-	return latitudeRegex.MatchString(v)
-}
-
-func isMinimum(fl reflect.Value, rule int) bool {
-	// Handle invalid or nil values
-	if !fl.IsValid() || (fl.Kind() == reflect.Ptr && fl.IsNil()) {
-		return rule <= 0 // A nil value satisfies min=0, fails otherwise
-	}
-
-	switch fl.Kind() {
-	case reflect.String:
-		return len(fl.String()) >= rule // or utf8.RuneCountInString(fl.String()) for characters
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		return fl.Int() >= int64(rule)
-	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-		return fl.Uint() >= uint64(rule)
-	case reflect.Float32, reflect.Float64:
-		return fl.Float() >= float64(rule)
-	case reflect.Slice, reflect.Array:
-		return fl.Len() >= rule
-	case reflect.Pointer:
-		// Recursively check the dereferenced value
-		return isMinimum(fl.Elem(), rule)
-	default:
-		// Unsupported type, treat as invalid
+func isIP(value reflect.Value) bool { s, ok := stringValue(value); return ok && net.ParseIP(s) != nil }
+func isIPV4(value reflect.Value) bool {
+	s, ok := stringValue(value)
+	if !ok {
 		return false
 	}
-}
-
-func isMaximum(fl reflect.Value, rule int) bool {
-	// if len(fl.String()) <= rule {
-	// 	return true
-	// } else {
-	// 	return false
-	// }
-	if !fl.IsValid() || (fl.Kind() == reflect.Ptr && fl.IsNil()) {
-		return rule <= 0 // A nil value satisfies min=0, fails otherwise
+	if ip := net.ParseIP(s); ip != nil {
+		return ip.To4() != nil
 	}
-
-	switch fl.Kind() {
-	case reflect.String:
-		return len(fl.String()) <= rule // or utf8.RuneCountInString(fl.String()) for characters
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		return fl.Int() <= int64(rule)
-	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-		return fl.Uint() <= uint64(rule)
-	case reflect.Float32, reflect.Float64:
-		return fl.Float() <= float64(rule)
-	case reflect.Slice, reflect.Array:
-		return fl.Len() <= rule
-	case reflect.Pointer:
-		// Recursively check the dereferenced value
-		return isMaximum(fl.Elem(), rule)
-	default:
-		// Unsupported type, treat as invalid
+	ip, _, err := net.ParseCIDR(s)
+	return err == nil && ip.To4() != nil
+}
+func isIPV6(value reflect.Value) bool {
+	s, ok := stringValue(value)
+	if !ok {
 		return false
 	}
+	ip, _, err := net.ParseCIDR(s)
+	if err == nil {
+		return ip.To4() == nil
+	}
+	parsed := net.ParseIP(s)
+	return parsed != nil && parsed.To4() == nil
 }
 
-func isEqualField(fl reflect.Value, rule string) bool {
-	return fl.String() == rule
-}
-
-func isGTE(v reflect.Value, min float64) bool {
-	switch v.Kind() {
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		return float64(v.Int()) >= min
-	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-		return float64(v.Uint()) >= min
-	case reflect.Float32, reflect.Float64:
-		return v.Float() >= min
-	default:
+func isURL(value reflect.Value) bool {
+	s, ok := stringValue(value)
+	if !ok || s == "" {
 		return false
 	}
-}
-
-func isLTE(v reflect.Value, max float64) bool {
-	switch v.Kind() {
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		return float64(v.Int()) <= max
-	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-		return float64(v.Uint()) <= max
-	case reflect.Float32, reflect.Float64:
-		return v.Float() <= max
-	default:
+	u, err := url.ParseRequestURI(s)
+	if err != nil {
 		return false
 	}
+	return u.Host != "" && (u.Scheme == "http" || u.Scheme == "https")
 }
 
-func isTimezone(v reflect.Value) bool {
-	if v.Kind() != reflect.String {
+func isDate(value reflect.Value) bool {
+	s, ok := stringValue(value)
+	if !ok {
 		return false
 	}
-	_, err := time.LoadLocation(v.String())
+	_, err := time.Parse("2006-01-02", strings.ReplaceAll(s, "/", "-"))
 	return err == nil
 }
 
-func isLength(v reflect.Value, l int) bool {
-	switch v.Kind() {
+func numericString(value reflect.Value) (string, bool) {
+	for value.IsValid() && (value.Kind() == reflect.Ptr || value.Kind() == reflect.Interface) {
+		if value.IsNil() {
+			return "", false
+		}
+		value = value.Elem()
+	}
+	if !value.IsValid() {
+		return "", false
+	}
+	switch value.Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return strconv.FormatInt(value.Int(), 10), true
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+		return strconv.FormatUint(value.Uint(), 10), true
+	case reflect.Float32, reflect.Float64:
+		return strconv.FormatFloat(value.Float(), 'f', -1, value.Type().Bits()), true
+	default:
+		return stringValue(value)
+	}
+}
+
+func isNumber(value reflect.Value) bool {
+	s, ok := numericString(value)
+	return ok && numberRegex.MatchString(s)
+}
+func isNumeric(value reflect.Value) bool {
+	s, ok := numericString(value)
+	return ok && numericRegex.MatchString(s)
+}
+func isLatitude(value reflect.Value) bool {
+	s, ok := numericString(value)
+	return ok && latitudeRegex.MatchString(s)
+}
+func isLongitude(value reflect.Value) bool {
+	s, ok := numericString(value)
+	return ok && longitudeRegex.MatchString(s)
+}
+
+func isMinimum(value reflect.Value, rule int) bool {
+	value, ok := dereference(value)
+	if !ok {
+		return false
+	}
+	switch value.Kind() {
 	case reflect.String:
-		return len(v.String()) == l
-	case reflect.Slice, reflect.Array:
-		return v.Len() == l
+		return utf8.RuneCountInString(value.String()) >= rule
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return value.Int() >= int64(rule)
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+		return value.Uint() >= uint64(rule)
+	case reflect.Float32, reflect.Float64:
+		return value.Float() >= float64(rule)
+	case reflect.Slice, reflect.Array, reflect.Map:
+		return value.Len() >= rule
 	default:
 		return false
 	}
 }
 
-func isEmptyValue(v reflect.Value) bool {
-	switch v.Kind() {
+func isMaximum(value reflect.Value, rule int) bool {
+	value, ok := dereference(value)
+	if !ok {
+		return false
+	}
+	switch value.Kind() {
 	case reflect.String:
-		return strings.TrimSpace(v.String()) == ""
-	case reflect.Slice, reflect.Array:
-		return v.Len() == 0
-	case reflect.Pointer, reflect.Interface:
-		return v.IsNil()
-	case reflect.Struct:
-		if v.Type() == reflect.TypeOf(time.Time{}) {
-			return v.Interface().(time.Time).IsZero()
-		}
+		return utf8.RuneCountInString(value.String()) <= rule
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return value.Int() <= int64(rule)
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+		return value.Uint() <= uint64(rule)
+	case reflect.Float32, reflect.Float64:
+		return value.Float() <= float64(rule)
+	case reflect.Slice, reflect.Array, reflect.Map:
+		return value.Len() <= rule
+	default:
+		return false
+	}
+}
+
+func isGTE(value reflect.Value, min float64) bool {
+	n, ok := numericFloat(value)
+	return ok && n >= min
+}
+func isLTE(value reflect.Value, max float64) bool {
+	n, ok := numericFloat(value)
+	return ok && n <= max
+}
+func numericFloat(value reflect.Value) (float64, bool) {
+	value, ok := dereference(value)
+	if !ok {
+		return 0, false
+	}
+	switch value.Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return float64(value.Int()), true
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+		return float64(value.Uint()), true
+	case reflect.Float32, reflect.Float64:
+		return value.Float(), true
+	default:
+		return 0, false
+	}
+}
+func isTimezone(value reflect.Value) bool {
+	s, ok := stringValue(value)
+	if !ok {
+		return false
+	}
+	_, err := time.LoadLocation(s)
+	return err == nil
+}
+func isLength(value reflect.Value, length int) bool {
+	value, ok := dereference(value)
+	if !ok {
+		return false
+	}
+	if value.Kind() == reflect.String {
+		return utf8.RuneCountInString(value.String()) == length
+	}
+	if value.Kind() == reflect.Slice || value.Kind() == reflect.Array || value.Kind() == reflect.Map {
+		return value.Len() == length
 	}
 	return false
+}
+
+func dereference(value reflect.Value) (reflect.Value, bool) {
+	for value.IsValid() && (value.Kind() == reflect.Ptr || value.Kind() == reflect.Interface) {
+		if value.IsNil() {
+			return reflect.Value{}, false
+		}
+		value = value.Elem()
+	}
+	return value, value.IsValid()
+}
+func isEmptyValue(value reflect.Value) bool {
+	if !value.IsValid() {
+		return true
+	}
+	if value.Kind() == reflect.String {
+		return strings.TrimSpace(value.String()) == ""
+	}
+	if value.Kind() == reflect.Ptr || value.Kind() == reflect.Interface {
+		return value.IsNil()
+	}
+	if value.Kind() == reflect.Struct && value.Type() == reflect.TypeOf(time.Time{}) {
+		return value.Interface().(time.Time).IsZero()
+	}
+	return value.IsZero()
 }
